@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健康助手小艾 - 骨骼健康咨询</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 90vh;
+            gap: 20px;
+        }
+        
+        .chat-container {
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .control-panel {
+            width: 300px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: none; /* 默认隐藏，通过密码访问 */
+            overflow-y: auto;
+        }
+        
+        .control-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #4a86e8;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+        
+        .chat-header {
+            background-color: #4a86e8;
+            color: white;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #4a86e8;
+        }
+        
+        .ai-avatar {
+            background-color: #fff;
+            color: #4a86e8;
+        }
+        
+        .user-avatar {
+            background-color: #66bb6a;
+            color: white;
+        }
+        
+        .header-info {
+            flex: 1;
+        }
+        
+        .header-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .header-status {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 10px;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+        }
+        
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            line-height: 1.4;
+        }
+        
+        .ai-message .message-bubble {
+            background-color: #f0f0f0;
+            border-bottom-left-radius: 4px;
+            color: #333;
+        }
+        
+        .user-message .message-bubble {
+            background-color: #4a86e8;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-time {
+            font-size: 10px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .typing-indicator {
+            display: none;
+            background-color: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            margin-bottom: 5px;
+            align-self: flex-start;
+        }
+        
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            float: left;
+            margin: 0 1px;
+            background-color: #999;
+            display: block;
+            border-radius: 50%;
+            opacity: 0.4;
+        }
+        
+        .typing-indicator span:nth-child(1) {
+            animation: typing 1s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #eee;
+            background-color: white;
+        }
+        
+        .chat-input textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            resize: none;
+            outline: none;
+            height: 40px;
+            font-size: 14px;
+        }
+        
+        .chat-input button {
+            background-color: #4a86e8;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .waiting-message {
+            text-align: center;
+            padding: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .media-content {
+            max-width: 250px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+        
+        .trust-rating-panel {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+        
+        .rating-item {
+            margin-bottom: 15px;
+        }
+        
+        .rating-label {
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .likert-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .scale-option {
+            text-align: center;
+            padding: 5px;
+        }
+        
+        .scale-number {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+        
+        .scale-radio {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .scale-label {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .hidden-webgazer-preview {
+            display: none;
+        }
+        
+        /* 控制面板样式 */
+        .control-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .control-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .control-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .control-btn {
+            background-color: #4a86e8;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .control-btn:hover {
+            background-color: #3a76d8;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .login-error {
+            color: #f44336;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <button class="control-toggle" id="controlToggle">⚙️</button>
+    
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="avatar ai-avatar">小艾</div>
+                <div class="header-info">
+                    <div class="header-name">健康助手小艾</div>
+                    <div class="header-status">在线</div>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai-message">
+                    <div class="message-bubble">
+                        你好呀！我是健康助手小艾，今天想和你聊聊天～先分享一些有趣的内容给你看看😊
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <div class="chat-input">
+                <textarea id="messageInput" placeholder="请输入..." disabled></textarea>
+                <button id="sendButton" disabled>➤</button>
+            </div>
+            
+            <div class="hidden-webgazer-preview" id="webgazerPreview">
+                <video id="preview" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+            </div>
+        </div>
+        
+        <div class="control-panel" id="controlPanel">
+            <div class="control-section">
+                <div class="control-title">主试控制面板</div>
+                <div class="login-form" id="loginForm">
+                    <input type="password" id="adminPassword" class="control-input" placeholder="输入管理员密码">
+                    <button class="control-btn" id="loginBtn">登录</button>
+                    <div id="loginError" class="login-error" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div id="controlContent" style="display: none;">
+                <div class="control-section">
+                    <div class="control-title">发送AI消息</div>
+                    <textarea id="aiMessageInput" class="control-input" rows="3" placeholder="输入AI要发送的消息..."></textarea>
+                    <button class="control-btn" id="sendAiMessageBtn">发送</button>
+                </div>
+                
+                <div class="control-section">
+                    <div class="control-title">预设回复</div>
+                    <button class="control-btn" id="empathyResponse">同理心回复</button>
+                    <button class="control-btn" id="informativeResponse">信息性回复</button>
+                    <button class="control-btn" id="questionResponse">提问式回复</button>
+                </div>
+                
+                <div class="control-section">
+                    <div class="control-title">实验控制</div>
+                    <button class="control-btn" id="nextStageBtn">进入下一阶段</button>
+                    <button class="control-btn" id="showRatingsBtn">显示信任度评分</button>
+                </div>
+                
+                <div class="control-section">
+                    <div class="control-title">实时数据</div>
+                    <div>当前阶段: <span id="currentStageDisplay">情绪唤醒</span></div>
+                    <div>被试ID: <span id="subjectIdDisplay">-</span></div>
+                    <div>情绪组: <span id="emotionGroupDisplay">-</span></div>
+                    <div>眼动数据: <span id="gazeDataCount">0</span> 条</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入WebGazer和CLMTrackr库 -->
+    <script src="https://webgazer.cs.brown.edu/webgazer.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/clmtrackr@1.1.2/clmtrackr.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js" type="text/javascript"></script>
+    
+    <script>
+        // 实验状态管理
+        const experimentState = {
+            subjectId: '',  // 被试ID由URL参数传入
+            emotionGroup: '', // 情绪组（积极/中性/消极）
+            gazeData: [], // 眼动数据
+            isTrackingActive: true, // 是否激活眼动追踪
+            currentStage: 'emotion', // 当前阶段：emotion, health_info, rating
+            waitingForReply: false, // 是否在等待用户回复
+            videoWatchStart: null, // 视频观看开始时间
+            videoWatchRequired: false, // 是否需要强制观看视频
+            healthInfoIndex: 0, // 当前显示的健康信息索引
+            ratings: {}, // 信任度评分
+            isAdminLoggedIn: false, // 主试是否已登录
+            chatHistory: [] // 聊天历史记录
+        };
+
+        // 情绪内容库（根据情绪组展示不同的内容）
+        const emotionContents = {
+            positive: {
+                type: 'video',
+                content: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4', // 示例视频
+                text: '这个画面是不是超治愈？我每次看都觉得心情超好～'
+            },
+            neutral: {
+                type: 'image',
+                content: 'https://images.unsplash.com/photo-1505506874110-6a7a69069a08?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', // 示例图片
+                text: '这是我日常工作的小角落，是不是很普通呀？'
+            },
+            negative: {
+                type: 'image',
+                content: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', // 示例图片
+                text: '最近天气总是阴阴的，是不是会有点提不起精神？'
+            }
+        };
+
+        // 健康信息库
+        const healthInfoContents = [
+            {
+                id: 'sport_true',
+                text: '我看到研究说，每周3次中等强度运动（比如快走）能增强骨密度，你觉得这个靠谱吗？',
+                type: '真实信息',
+                color: '#4CAF50'
+            },
+            {
+                id: 'sport_misleading',
+                text: '我听说每天跑5公里能快速逆转骨质疏松，1个月就见效，你信吗？',
+                type: '误导信息',
+                color: '#FFC107'
+            },
+            {
+                id: 'sport_false',
+                text: '我看到有人说，骨质疏松患者不能做任何运动，一动就会骨折，太吓人了～',
+                type: '错误信息',
+                color: '#F44336'
+            },
+            {
+                id: 'diet_true',
+                text: '专家建议多吃富含钙质的食物，如牛奶、豆制品、绿叶蔬菜，对骨骼有益。',
+                type: '真实信息',
+                color: '#4CAF50'
+            },
+            {
+                id: 'diet_misleading',
+                text: '听说只要坚持喝骨汤，就能快速补充骨骼所需钙质，效果特别好！',
+                type: '误导信息',
+                color: '#FFC107'
+            },
+            {
+                id: 'diet_false',
+                text: '有人称，补钙越多越好，即使超量也没关系，身体会自动调节。',
+                type: '错误信息',
+                color: '#F44336'
+            }
+        ];
+
+        // 预设AI回复
+        const presetResponses = {
+            empathy: [
+                '我理解你的想法，确实...',
+                '听起来你对此有些疑虑，这是很正常的。',
+                '我能感受到你的担忧，其实...',
+                '你说得很有道理，很多人也有类似的体会。'
+            ],
+            informative: [
+                '根据最新的研究，这个观点有一定依据...',
+                '这个问题比较复杂，从科学角度看...',
+                '我查阅了一些资料，发现...',
+                '专家们对此有不同的看法...'
+            ],
+            question: [
+                '那你平时是如何关注骨骼健康的呢？',
+                '你觉得哪些因素对骨骼健康最重要？',
+                '你对这类健康信息通常持什么态度？',
+                '这种情况下你会怎么选择？'
+            ]
+        };
+
+        // DOM元素引用
+        const domElements = {
+            chatMessages: document.getElementById('chatMessages'),
+            messageInput: document.getElementById('messageInput'),
+            sendButton: document.getElementById('sendButton'),
+            typingIndicator: document.getElementById('typingIndicator'),
+            webgazerPreview: document.getElementById('webgazerPreview'),
+            previewVideo: document.getElementById('preview'),
+            controlPanel: document.getElementById('controlPanel'),
+            controlToggle: document.getElementById('controlToggle'),
+            loginForm: document.getElementById('loginForm'),
+            adminPassword: document.getElementById('adminPassword'),
+            loginBtn: document.getElementById('loginBtn'),
+            loginError: document.getElementById('loginError'),
+            controlContent: document.getElementById('controlContent'),
+            aiMessageInput: document.getElementById('aiMessageInput'),
+            sendAiMessageBtn: document.getElementById('sendAiMessageBtn'),
+            empathyResponse: document.getElementById('empathyResponse'),
+            informativeResponse: document.getElementById('informativeResponse'),
+            questionResponse: document.getElementById('questionResponse'),
+            nextStageBtn: document.getElementById('nextStageBtn'),
+            showRatingsBtn: document.getElementById('showRatingsBtn'),
+            currentStageDisplay: document.getElementById('currentStageDisplay'),
+            subjectIdDisplay: document.getElementById('subjectIdDisplay'),
+            emotionGroupDisplay: document.getElementById('emotionGroupDisplay'),
+            gazeDataCount: document.getElementById('gazeDataCount')
+        };
+
+        // 页面加载后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 从URL参数获取被试ID和情绪组
+            const urlParams = new URLSearchParams(window.location.search);
+            experimentState.subjectId = urlParams.get('subjectId') || 'demo_user';
+            experimentState.emotionGroup = urlParams.get('emotionGroup') || 'positive';
+            
+            // 更新显示
+            domElements.subjectIdDisplay.textContent = experimentState.subjectId;
+            domElements.emotionGroupDisplay.textContent = 
+                experimentState.emotionGroup === 'positive' ? '积极' :
+                experimentState.emotionGroup === 'neutral' ? '中性' : '消极';
+            
+            // 如果没有参数，显示提示
+            if (!urlParams.has('subjectId')) {
+                addMessage('system', '提示：请使用正确的链接访问，需要包含subjectId参数，例如：?subjectId=积极_高知_001&emotionGroup=positive');
+            }
+            
+            // 启动WebGazer
+            startWebGazer();
+            
+            // 开始聊天流程
+            setTimeout(() => {
+                triggerEmotionContent();
+            }, 2000);
+            
+            // 绑定发送按钮事件
+            domElements.sendButton.addEventListener('click', sendMessage);
+            domElements.messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 绑定控制面板事件
+            domElements.controlToggle.addEventListener('click', toggleControlPanel);
+            domElements.loginBtn.addEventListener('click', loginAdmin);
+            domElements.sendAiMessageBtn.addEventListener('click', sendAiMessage);
+            domElements.empathyResponse.addEventListener('click', () => sendPresetResponse('empathy'));
+            domElements.informativeResponse.addEventListener('click', () => sendPresetResponse('informative'));
+            domElements.questionResponse.addEventListener('click', () => sendPresetResponse('question'));
+            domElements.nextStageBtn.addEventListener('click', forceNextStage);
+            domElements.showRatingsBtn.addEventListener('click', () => {
+                triggerRating();
+            });
+            
+            // 定期更新数据显示
+            setInterval(updateControlDisplay, 1000);
+        });
+
+        // 启动WebGazer
+        function startWebGazer() {
+            try {
+                // 初始化WebGazer
+                webgazer.setRegression('ridge')
+                       .setTracker('clmtrackr')
+                       .setGazeListener(function(data, clock) {
+                           if (experimentState.isTrackingActive && data !== null) {
+                               // 记录眼动数据
+                               experimentState.gazeData.push({
+                                   x: data.x,
+                                   y: data.y,
+                                   t: clock,
+                                   localTime: new Date().toISOString(),
+                                   stage: experimentState.currentStage
+                               });
+                           }
+                       })
+                       .begin();
+                
+                // 隐藏摄像头预览（仅用于WebGazer内部处理）
+                domElements.previewVideo.srcObject = webgazer.video;
+                domElements.webgazerPreview.style.display = 'none';
+                
+            } catch (error) {
+                console.error('WebGazer启动失败:', error);
+                // 即使失败也不影响聊天流程
+                experimentState.isTrackingActive = false;
+            }
+        }
+
+        // 添加消息到聊天窗口
+        function addMessage(sender, text, mediaUrl = null, mediaType = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            
+            // 添加文本内容
+            bubbleDiv.textContent = text;
+            
+            // 如果有媒体内容，则添加
+            if (mediaUrl) {
+                const mediaElement = document.createElement(mediaType === 'video' ? 'video' : 'img');
+                mediaElement.src = mediaUrl;
+                mediaElement.className = 'media-content';
+                
+                if (mediaType === 'video') {
+                    mediaElement.autoplay = true;
+                    mediaElement.muted = true;
+                    mediaElement.loop = true;
+                    
+                    // 监听视频观看时间
+                    mediaElement.addEventListener('play', function() {
+                        experimentState.videoWatchStart = new Date();
+                        experimentState.videoWatchRequired = true;
+                        
+                        // 禁用输入直到观看时间足够
+                        disableInput();
+                        
+                        // 检查观看时间
+                        const checkInterval = setInterval(() => {
+                            if (!experimentState.videoWatchRequired) {
+                                clearInterval(checkInterval);
+                                return;
+                            }
+                            
+                            const elapsed = (new Date() - experimentState.videoWatchStart) / 1000;
+                            if (elapsed >= 10) {  // 强制观看10秒
+                                experimentState.videoWatchRequired = false;
+                                enableInput();
+                                
+                                // 添加提醒消息
+                                setTimeout(() => {
+                                    addMessage('ai', '看完有没有什么感觉呀？可以随便说说～');
+                                    experimentState.waitingForReply = true;
+                                }, 500);
+                                
+                                clearInterval(checkInterval);
+                            }
+                        }, 100);
+                    });
+                } else {
+                    // 图片也需要10秒查看时间
+                    setTimeout(() => {
+                        if (experimentState.currentStage === 'emotion') {
+                            experimentState.videoWatchRequired = false;
+                            enableInput();
+                            
+                            // 添加提醒消息
+                            setTimeout(() => {
+                                addMessage('ai', '看完有没有什么感觉呀？可以随便说说～');
+                                experimentState.waitingForReply = true;
+                            }, 500);
+                        }
+                    }, 10000);
+                }
+                
+                bubbleDiv.appendChild(document.createElement('br'));
+                bubbleDiv.appendChild(mediaElement);
+            }
+            
+            messageDiv.appendChild(bubbleDiv);
+            domElements.chatMessages.appendChild(messageDiv);
+            
+            // 记录聊天历史
+            experimentState.chatHistory.push({
+                sender,
+                text,
+                mediaUrl,
+                mediaType,
+                timestamp: new Date()
+            });
+            
+            // 滚动到底部
+            domElements.chatMessages.scrollTop = domElements.chatMessages.scrollHeight;
+        }
+
+        // 显示正在输入指示器
+        function showTyping() {
+            domElements.typingIndicator.style.display = 'block';
+            domElements.chatMessages.scrollTop = domElements.chatMessages.scrollHeight;
+        }
+
+        // 隐藏正在输入指示器
+        function hideTyping() {
+            domElements.typingIndicator.style.display = 'none';
+        }
+
+        // 禁用输入
+        function disableInput() {
+            domElements.messageInput.disabled = true;
+            domElements.sendButton.disabled = true;
+        }
+
+        // 启用输入
+        function enableInput() {
+            domElements.messageInput.disabled = false;
+            domElements.sendButton.disabled = false;
+            domElements.messageInput.focus();
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const message = domElements.messageInput.value.trim();
+            if (!message) return;
+            
+            // 添加用户消息
+            addMessage('user', message);
+            
+            // 清空输入框
+            domElements.messageInput.value = '';
+            
+            // 根据当前阶段处理回复
+            if (experimentState.currentStage === 'emotion') {
+                // 情绪阶段结束，进入健康信息阶段
+                setTimeout(() => {
+                    triggerHealthInfo();
+                }, 1000);
+            } else if (experimentState.currentStage === 'health_info') {
+                // 在健康信息阶段，用户回复后AI继续发送下一条信息
+                setTimeout(() => {
+                    continueHealthInfo();
+                }, 1000);
+            } else if (experimentState.currentStage === 'rating') {
+                // 用户提交评分后，结束实验
+                setTimeout(() => {
+                    finishExperiment();
+                }, 1000);
+            }
+        }
+
+        // 触发情绪内容
+        function triggerEmotionContent() {
+            experimentState.currentStage = 'emotion';
+            experimentState.waitingForReply = false;
+            
+            const content = emotionContents[experimentState.emotionGroup];
+            if (content) {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('ai', content.text, content.content, content.type);
+                    
+                    // 禁用输入直到观看完成
+                    disableInput();
+                }, 1500);
+            }
+        }
+
+        // 触发健康信息
+        function triggerHealthInfo() {
+            experimentState.currentStage = 'health_info';
+            experimentState.healthInfoIndex = 0;
+            
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('ai', '聊完心情，我们聊聊健康吧～我最近了解到一些关于骨骼健康的知识，想和你分享下😜');
+                
+                // 开始发送健康信息
+                setTimeout(() => {
+                    continueHealthInfo();
+                }, 1500);
+            }, 1500);
+        }
+
+        // 继续发送健康信息
+        function continueHealthInfo() {
+            if (experimentState.healthInfoIndex < healthInfoContents.length) {
+                const info = healthInfoContents[experimentState.healthInfoIndex];
+                
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('ai', info.text);
+                    
+                    experimentState.healthInfoIndex++;
+                    
+                    // 如果还有信息要发送
+                    if (experimentState.healthInfoIndex < healthInfoContents.length) {
+                        experimentState.waitingForReply = true;
+                    } else {
+                        // 所有健康信息发送完毕，进入评分阶段
+                        setTimeout(() => {
+                            triggerRating();
+                        }, 2000);
+                    }
+                }, 1500);
+            }
+        }
+
+        // 触发信任度评分
+        function triggerRating() {
+            experimentState.currentStage = 'rating';
+            experimentState.waitingForReply = false;
+            
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('ai', '我分享的这些骨骼健康知识，你对它们的信任度分别是多少呀？（1=非常不可信，5=非常可信）');
+                
+                // 添加评分面板
+                const ratingPanel = document.createElement('div');
+                ratingPanel.className = 'trust-rating-panel';
+                
+                healthInfoContents.forEach((info, index) => {
+                    const ratingItem = document.createElement('div');
+                    ratingItem.className = 'rating-item';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'rating-label';
+                    label.textContent = `${index + 1}. ${info.text}`;
+                    label.style.borderLeft = `3px solid ${info.color}`;
+                    label.style.paddingLeft = '8px';
+                    label.style.marginBottom = '8px';
+                    
+                    const scaleContainer = document.createElement('div');
+                    scaleContainer.className = 'likert-scale';
+                    
+                    for (let i = 1; i <= 5; i++) {
+                        const option = document.createElement('div');
+                        option.className = 'scale-option';
+                        
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `rating-${info.id}`;
+                        radio.value = i;
+                        radio.className = 'scale-radio';
+                        radio.addEventListener('change', function() {
+                            experimentState.ratings[info.id] = parseInt(this.value);
+                        });
+                        
+                        const number = document.createElement('div');
+                        number.className = 'scale-number';
+                        number.textContent = i;
+                        
+                        const scaleLabel = document.createElement('div');
+                        scaleLabel.className = 'scale-label';
+                        scaleLabel.textContent = i === 1 ? '非常不可信' : i === 5 ? '非常可信' : '';
+                        
+                        option.appendChild(radio);
+                        option.appendChild(number);
+                        option.appendChild(scaleLabel);
+                        scaleContainer.appendChild(option);
+                    }
+                    
+                    ratingItem.appendChild(label);
+                    ratingItem.appendChild(scaleContainer);
+                    ratingPanel.appendChild(ratingItem);
+                });
+                
+                // 添加提交按钮
+                const submitBtn = document.createElement('button');
+                submitBtn.textContent = '提交评分';
+                submitBtn.style.marginTop = '10px';
+                submitBtn.style.padding = '8px 16px';
+                submitBtn.style.backgroundColor = '#4a86e8';
+                submitBtn.style.color = 'white';
+                submitBtn.style.border = 'none';
+                submitBtn.style.borderRadius = '4px';
+                submitBtn.style.cursor = 'pointer';
+                submitBtn.addEventListener('click', function() {
+                    // 检查是否所有评分都已完成
+                    const allRated = healthInfoContents.every(info => 
+                        experimentState.ratings.hasOwnProperty(info.id)
+                    );
+                    
+                    if (!allRated) {
+                        alert('请完成所有健康信息的信任度评分！');
+                        return;
+                    }
+                    
+                    // 提交评分
+                    addMessage('user', '已提交信任度评分');
+                    setTimeout(() => {
+                        finishExperiment();
+                    }, 1000);
+                });
+                
+                ratingPanel.appendChild(submitBtn);
+                
+                // 添加到聊天窗口
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ai-message';
+                messageDiv.appendChild(ratingPanel);
+                domElements.chatMessages.appendChild(messageDiv);
+                
+                // 滚动到底部
+                domElements.chatMessages.scrollTop = domElements.chatMessages.scrollHeight;
+            }, 1500);
+        }
+
+        // 完成实验
+        function finishExperiment() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('ai', '谢谢你的参与～我们今天的聊天就到这里啦！希望这些健康知识对你有帮助😊');
+                
+                // 导出数据
+                setTimeout(() => {
+                    exportData();
+                }, 1000);
+            }, 1000);
+        }
+
+        // 导出数据
+        function exportData() {
+            // 整合数据
+            const data = {
+                subjectId: experimentState.subjectId,
+                emotionGroup: experimentState.emotionGroup,
+                ratings: experimentState.ratings,
+                gazeData: experimentState.gazeData,
+                chatHistory: experimentState.chatHistory,
+                timestamp: new Date().toISOString()
+            };
+            
+            // 转换为CSV格式
+            const csvContent = "data:text/csv;charset=utf-8,"
+                + "subjectId,emotionGroup,contentId,rating,x,y,time,localTime,stage,sender,message\n"
+                + experimentState.gazeData.map(row => 
+                    [experimentState.subjectId, 
+                     experimentState.emotionGroup, 
+                     '', 
+                     '', 
+                     row.x, 
+                     row.y, 
+                     row.t, 
+                     row.localTime, 
+                     row.stage,
+                     '',
+                     ''].join(",")
+                ).join("\n")
+                + "\n" +
+                Object.entries(experimentState.ratings).map(([contentId, rating]) => 
+                    [experimentState.subjectId, 
+                     experimentState.emotionGroup, 
+                     contentId, 
+                     rating, 
+                     '', 
+                     '', 
+                     '', 
+                     new Date().toISOString(), 
+                     'rating',
+                     '',
+                     ''].join(",")
+                ).join("\n");
+            
+            // 添加聊天记录
+            + "\n" +
+            experimentState.chatHistory.map(chat => 
+                [experimentState.subjectId, 
+                 experimentState.emotionGroup, 
+                 '', 
+                 '', 
+                 '', 
+                 '', 
+                 '', 
+                 chat.timestamp.toISOString(), 
+                 experimentState.currentStage,
+                 chat.sender,
+                 chat.text.replace(/,/g, ';').replace(/\n/g, ' ')].join(",")
+            ).join("\n");
+            
+            // 创建下载链接
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `eyetracking_${experimentState.subjectId}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('实验完成，数据已导出');
+        }
+
+        // 切换控制面板显示/隐藏
+        function toggleControlPanel() {
+            const isVisible = domElements.controlPanel.style.display !== 'none';
+            domElements.controlPanel.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // 管理员登录
+        function loginAdmin() {
+            const password = domElements.adminPassword.value;
+            // 这里设置一个简单的密码，实际使用时应使用更安全的方法
+            if (password === 'admin123') {
+                experimentState.isAdminLoggedIn = true;
+                domElements.loginForm.style.display = 'none';
+                domElements.controlContent.style.display = 'block';
+                domElements.loginError.style.display = 'none';
+            } else {
+                domElements.loginError.textContent = '密码错误';
+                domElements.loginError.style.display = 'block';
+            }
+        }
+
+        // 发送AI消息
+        function sendAiMessage() {
+            const message = domElements.aiMessageInput.value.trim();
+            if (!message) return;
+            
+            addMessage('ai', message);
+            domElements.aiMessageInput.value = '';
+        }
+
+        // 发送预设回复
+        function sendPresetResponse(type) {
+            const responses = presetResponses[type];
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            addMessage('ai', randomResponse);
+        }
+
+        // 强制进入下一阶段
+        function forceNextStage() {
+            if (experimentState.currentStage === 'emotion') {
+                triggerHealthInfo();
+            } else if (experimentState.currentStage === 'health_info') {
+                triggerRating();
+            }
+        }
+
+        // 更新控制面板显示
+        function updateControlDisplay() {
+            domElements.currentStageDisplay.textContent = 
+                experimentState.currentStage === 'emotion' ? '情绪唤醒' :
+                experimentState.currentStage === 'health_info' ? '健康信息' : '信任度评分';
+            domElements.gazeDataCount.textContent = experimentState.gazeData.length;
+        }
+
+        // 页面卸载前清理WebGazer
+        window.addEventListener('beforeunload', function() {
+            if (typeof webgazer !== 'undefined') {
+                webgazer.end();
+            }
+        });
+    </script>
+</body>
+</html>

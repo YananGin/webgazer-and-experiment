@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主试控制面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .panel-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .subject-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .subject-item {
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .subject-item:hover {
+            background-color: #f0f8ff;
+        }
+        
+        .subject-item.active {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        
+        .ai-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .user-message {
+            background-color: #f5f5f5;
+            margin-right: auto;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .chat-input button {
+            padding: 10px 15px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .control-section {
+            margin-top: 20px;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .preset-btn {
+            padding: 8px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+        }
+        
+        .preset-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .data-display {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .status-online {
+            background-color: #4caf50;
+        }
+        
+        .status-offline {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>主试控制面板</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <div class="panel-title">被试列表</div>
+            <div class="subject-list" id="subjectList"></div>
+            
+            <div class="control-section">
+                <div class="panel-title">控制选项</div>
+                <button id="refreshBtn" style="padding: 8px 12px; background-color: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">刷新被试列表</button>
+            </div>
+            
+            <div class="control-section">
+                <div class="panel-title">预设回复</div>
+                <div class="preset-buttons">
+                    <button class="preset-btn">我理解你的想法，确实...</button>
+                    <button class="preset-btn">听起来你对此有些疑虑，这是很正常的。</button>
+                    <button class="preset-btn">我能感受到你的担忧，其实...</button>
+                    <button class="preset-btn">你说得很有道理，很多人也有类似的体会。</button>
+                    <button class="preset-btn">根据最新的研究，这个观点有一定依据...</button>
+                    <button class="preset-btn">那你平时是如何关注骨骼健康的呢？</button>
+                    <button class="preset-btn">你觉得哪些因素对骨骼健康最重要？</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="panel-title">与被试对话</div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message ai-message">欢迎使用健康助手小艾实验系统！请选择一个被试开始对话。</div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="adminMessageInput" placeholder="输入AI回复消息...">
+                    <button id="sendMessageBtn">发送</button>
+                </div>
+            </div>
+            
+            <div class="data-display">
+                <div><strong>实时数据监控</strong></div>
+                <div>当前被试: <span id="currentSubject">未选择</span></div>
+                <div>当前阶段: <span id="currentStage">未开始</span></div>
+                <div>眼动数据: <span id="gazeDataCount">0</span> 条</div>
+                <div>信任评分: <span id="ratingStatus">未评分</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentSubject = null;
+        let gazeDataCount = 0;
+        let ratings = {};
+
+        // DOM元素
+        const domElements = {
+            subjectList: document.getElementById('subjectList'),
+            chatMessages: document.getElementById('chatMessages'),
+            adminMessageInput: document.getElementById('adminMessageInput'),
+            sendMessageBtn: document.getElementById('sendMessageBtn'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            currentSubject: document.getElementById('currentSubject'),
+            currentStage: document.getElementById('currentStage'),
+            gazeDataCount: document.getElementById('gazeDataCount'),
+            ratingStatus: document.getElementById('ratingStatus')
+        };
+
+        // 连接到服务器
+        socket.emit('admin_connect', 'admin_' + Date.now());
+
+        // 添加消息到聊天窗口
+        function addMessage(sender, text, timestamp = new Date()) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const timeStr = new Date(timestamp).toLocaleTimeString();
+            messageDiv.innerHTML = `<div>${text}</div><small style="color: #888;">${timeStr}</small>`;
+            
+            domElements.chatMessages.appendChild(messageDiv);
+            domElements.chatMessages.scrollTop = domElements.chatMessages.scrollHeight;
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const message = domElements.adminMessageInput.value.trim();
+            if (!message || !currentSubject) return;
+            
+            socket.emit('admin_send_ai_response', {
+                subjectId: currentSubject,
+                message: message,
+                timestamp: new Date()
+            });
+            
+            addMessage('ai', message);
+            domElements.adminMessageInput.value = '';
+        }
+
+        // 更新被试列表
+        function updateSubjectList(subjects) {
+            domElements.subjectList.innerHTML = '';
+            
+            subjects.forEach(subject => {
+                const item = document.createElement('div');
+                item.className = 'subject-item';
+                if (currentSubject === subject.subjectId) {
+                    item.classList.add('active');
+                }
+                
+                item.innerHTML = `
+                    <div>
+                        <strong>${subject.subjectId}</strong>
+                        <span class="status-indicator ${subject.connected ? 'status-online' : 'status-offline'}">
+                            ${subject.connected ? '在线' : '离线'}
+                        </span>
+                    </div>
+                    <small>情绪组: ${getEmotionGroupName(subject.emotionGroup)}</small>
+                `;
+                
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.subject-item').forEach(el => el.classList.remove('active'));
+                    item.classList.add('active');
+                    currentSubject = subject.subjectId;
+                    domElements.currentSubject.textContent = currentSubject;
+                    domElements.chatMessages.innerHTML = '<div class="message ai-message">已选择被试，可以开始对话。</div>';
+                });
+                
+                domElements.subjectList.appendChild(item);
+            });
+        }
+
+        // 获取情绪组名称
+        function getEmotionGroupName(groupCode) {
+            switch(groupCode) {
+                case 'positive': return '积极';
+                case 'neutral': return '中性';
+                case 'negative': return '消极';
+                default: return '未知';
+            }
+        }
+
+        // 事件监听
+        domElements.sendMessageBtn.addEventListener('click', sendMessage);
+        domElements.adminMessageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // 预设回复按钮
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                domElements.adminMessageInput.value = btn.textContent;
+                sendMessage();
+            });
+        });
+
+        domElements.refreshBtn.addEventListener('click', () => {
+            socket.emit('admin_connect', 'admin_' + Date.now());
+        });
+
+        // Socket事件监听
+        socket.on('connect', () => {
+            console.log('主试已连接到服务器');
+        });
+
+        socket.on('subject_list_update', (subjects) => {
+            updateSubjectList(subjects);
+        });
+
+        socket.on('new_subject_connected', (data) => {
+            // 收到新被试连接的通知
+            socket.emit('admin_connect', 'admin_' + Date.now()); // 刷新列表
+        });
+
+        socket.on('admin_receive_message', (data) => {
+            if (data.subjectId === currentSubject) {
+                addMessage('user', data.message, data.timestamp);
+            }
+        });
+
+        socket.on('gaze_data_update', (data) => {
+            if (data.subjectId === currentSubject) {
+                gazeDataCount += data.gazeData.length;
+                domElements.gazeDataCount.textContent = gazeDataCount;
+                domElements.currentStage.textContent = data.stage;
+            }
+        });
+
+        socket.on('rating_update', (data) => {
+            if (data.subjectId === currentSubject) {
+                ratings = data.ratings;
+                domElements.ratingStatus.textContent = Object.keys(ratings).length > 0 ? '已评分' : '未评分';
+            }
+        });
+
+        socket.on('subject_disconnected', (data) => {
+            if (data.subjectId === currentSubject) {
+                addMessage('ai', '被试已断开连接', new Date());
+                currentSubject = null;
+                domElements.currentSubject.textContent = '已断开';
+            }
+            // 刷新被试列表
+            socket.emit('admin_connect', 'admin_' + Date.now());
+        });
+    </script>
+</body>
+</html>
